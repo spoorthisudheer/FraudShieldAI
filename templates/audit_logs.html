@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Immutable Security Audit Trail — FraudShieldAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Security Audit Trail</h1>
+        <p class="subtitle">Tamper-Evident Event Journal for Regulatory and Compliance Forensics</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-sm">← Back to Admin Operations</a>
+    </div>
+</div>
+
+<div class="card-section">
+    <div class="card-header">
+        <h3>Audit Event Log (Chronological)</h3>
+        <span class="badge-neutral">System Log Entries</span>
+    </div>
+
+    {% if logs %}
+    <div class="table-responsive">
+        <table class="data-table font-mono-table">
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Timestamp (UTC)</th>
+                    <th>Actor</th>
+                    <th>Action Type</th>
+                    <th>Event Details & Forensics</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td><code>#{{ log.id }}</code></td>
+                    <td><small>{{ log.timestamp }}</small></td>
+                    <td><strong>{{ log.username or 'SYSTEM' }}</strong></td>
+                    <td>
+                        <span class="audit-action-badge action-{{ log.action|lower }}">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td class="log-details-cell">{{ log.details }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No audit events recorded yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

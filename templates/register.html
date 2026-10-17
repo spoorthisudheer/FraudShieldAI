@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Register Demo Account — FraudShieldAI{% endblock %}
+
+{% block content %}
+<div class="auth-card-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">📝</div>
+            <h2>Create Demo Account</h2>
+            <p>Register a new test profile for transaction simulation</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username">Demo Username</label>
+                <input type="text" id="username" name="username" required placeholder="e.g. test_analyst" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Choose a demo password" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role Permission Level</label>
+                <select id="role" name="role" class="form-select">
+                    <option value="user" selected>Demo Customer (Can initiate simulated transactions)</option>
+                    <option value="admin">Fraud Operations Admin (Review alerts, held items & audit trail)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Create Demo Account</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Back to Login</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+# FraudShieldAI Dependencies for IBM LinuxONE (s390x) & Ubuntu 24.04
+# Note: On Ubuntu s390x, numpy, pandas, scipy, and scikit-learn are provided
+# natively via system packages (apt install python3-sklearn python3-pandas python3-numpy python3-scipy)
+# for optimal IBM z16 architecture acceleration.
+
+numpy>=1.26.0
+pandas>=2.1.0
+scipy>=1.11.0
+scikit-learn>=1.4.0
+joblib>=1.3.0
+flask>=3.0.0
+werkzeug>=3.0.0
+jinja2>=3.1.0
+pytest>=7.4.0

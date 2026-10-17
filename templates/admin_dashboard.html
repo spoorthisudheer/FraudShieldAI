@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Admin Operations Center — FraudShieldAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Security Operations Center (SOC)</h1>
+        <p class="subtitle">Real-Time Risk Triage, Quarantined Holds & Platform Telemetry</p>
+    </div>
+    <div class="header-badges">
+        <span class="badge-z-pill">IBM LinuxONE / s390x Active</span>
+        <a href="{{ url_for('audit_logs') }}" class="btn btn-outline-sm">View Immutable Audit Log</a>
+    </div>
+</div>
+
+<!-- Aggregated Metrics Grid -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Total Submissions</div>
+        <div class="metric-value">{{ total_tx }}</div>
+        <div class="metric-sub">Across all demo users</div>
+    </div>
+    <div class="metric-card success">
+        <div class="metric-label">Approved (Low Risk)</div>
+        <div class="metric-value text-success">{{ approved_tx }}</div>
+        <div class="metric-sub">Cleared automatically</div>
+    </div>
+    <div class="metric-card warning">
+        <div class="metric-label">Flagged for OTP</div>
+        <div class="metric-value text-warning">{{ otp_tx }}</div>
+        <div class="metric-sub">Step-up verified</div>
+    </div>
+    <div class="metric-card danger">
+        <div class="metric-label">Quarantined Holds</div>
+        <div class="metric-value text-danger">{{ held_tx }}</div>
+        <div class="metric-sub">Awaiting admin action</div>
+    </div>
+    <div class="metric-card dark">
+        <div class="metric-label">Admin Rejected</div>
+        <div class="metric-value text-muted">{{ rejected_tx }}</div>
+        <div class="metric-sub">Declined as fraudulent</div>
+    </div>
+</div>
+
+<!-- Quarantined Transactions Section -->
+<div class="card-section border-danger">
+    <div class="card-header bg-danger-subtle">
+        <div class="header-title-with-badge">
+            <span class="status-indicator-dot pulsating"></span>
+            <h3>High-Risk Quarantine Queue (Requires Human Intervention)</h3>
+        </div>
+        <span class="badge-danger-pill">{{ held_transactions|length }} Pending Review</span>
+    </div>
+
+    {% if held_transactions %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tx ID</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Risk Score</th>
+                    <th>Risk Drivers</th>
+                    <th>Administrative Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in held_transactions %}
+                <tr class="row-held">
+                    <td><code>#{{ tx.id }}</code></td>
+                    <td><strong>{{ tx.username }}</strong></td>
+                    <td class="amount-cell text-danger">₹{{ "%.2f"|format(tx.amount) }}</td>
+                    <td><span class="category-badge">{{ tx.merchant_category|capitalize }}</span></td>
+                    <td><span class="score-pill score-high">{{ tx.risk_score }}/100</span></td>
+                    <td class="reasons-cell">
+                        <small class="text-danger">{{ tx.risk_reasons|replace('"', '')|replace('[', '')|replace(']', '') }}</small>
+                    </td>
+                    <td class="actions-cell">
+                        <form method="POST" action="{{ url_for('admin_transaction_action', tx_id=tx.id, action='approve') }}" style="display:inline;">
+                            <button type="submit" class="btn btn-success-sm" onclick="return confirm('Approve Transaction #{{ tx.id }}? This will release the quarantine hold in simulation.')">
+                                ✓ Approve
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin_transaction_action', tx_id=tx.id, action='reject') }}" style="display:inline;">
+                            <button type="submit" class="btn btn-danger-sm" onclick="return confirm('Reject Transaction #{{ tx.id }} as fraudulent?')">
+                                ✕ Reject
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-check">✓</span>
+        <h4>Quarantine Queue Clear</h4>
+        <p>No high-risk transactions are currently pending administrative triage.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- All Transactions Log & Filter Section -->
+<div class="card-section">
+    <div class="card-header">
+        <h3>Master Transaction Log</h3>
+        
+        <div class="filter-pills">
+            <a href="{{ url_for('admin_dashboard') }}" class="pill-btn {% if not filter_cat %}active{% endif %}">All</a>
+            <a href="{{ url_for('admin_dashboard', category='LOW') }}" class="pill-btn {% if filter_cat == 'LOW' %}active{% endif %}">Low Risk</a>
+            <a href="{{ url_for('admin_dashboard', category='MEDIUM') }}" class="pill-btn {% if filter_cat == 'MEDIUM' %}active{% endif %}">Medium Risk</a>
+            <a href="{{ url_for('admin_dashboard', category='HIGH') }}" class="pill-btn {% if filter_cat == 'HIGH' %}active{% endif %}">High Risk</a>
+        </div>
+    </div>
+
+    {% if all_transactions %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tx ID</th>
+                    <th>User</th>
+                    <th>Time</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>ML Prob</th>
+                    <th>Risk Score</th>
+                    <th>Level</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in all_transactions %}
+                <tr>
+                    <td><code>#{{ tx.id }}</code></td>
+                    <td>{{ tx.username }}</td>
+                    <td>{{ tx.created_at }}</td>
+                    <td><span class="category-badge">{{ tx.merchant_category|capitalize }}</span></td>
+                    <td class="amount-cell">₹{{ "%.2f"|format(tx.amount) }}</td>
+                    <td>{{ "%.1f"|format(tx.ml_probability * 100) }}%</td>
+                    <td><span class="score-pill score-{{ tx.risk_category|lower }}">{{ tx.risk_score }}/100</span></td>
+                    <td><span class="risk-pill {{ tx.risk_category|lower }}">{{ tx.risk_category }}</span></td>
+                    <td>
+                        <span class="status-pill status-{{ tx.status|lower }}">
+                            {{ tx.status|replace('_', ' ') }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No transactions matching filter criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

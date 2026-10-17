@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}User Portal — FraudShieldAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Customer Banking Dashboard</h1>
+        <p class="subtitle">Account Activity & Real-Time Risk Protection Overview</p>
+    </div>
+    <a href="{{ url_for('transaction_page') }}" class="btn btn-primary">
+        <span>+</span> Simulate New Payment
+    </a>
+</div>
+
+<!-- Quick Metric Cards -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Total Transactions</div>
+        <div class="metric-value">{{ total_tx }}</div>
+        <div class="metric-sub">Initiated in simulation</div>
+    </div>
+    <div class="metric-card success">
+        <div class="metric-label">Approved (Low Risk)</div>
+        <div class="metric-value text-success">{{ approved_tx }}</div>
+        <div class="metric-sub">Immediate clearance</div>
+    </div>
+    <div class="metric-card warning">
+        <div class="metric-label">Step-Up Verified (OTP)</div>
+        <div class="metric-value text-warning">{{ otp_tx }}</div>
+        <div class="metric-sub">Medium-risk verification</div>
+    </div>
+    <div class="metric-card danger">
+        <div class="metric-label">Held by Shield (High Risk)</div>
+        <div class="metric-value text-danger">{{ held_tx }}</div>
+        <div class="metric-sub">Quarantined for review</div>
+    </div>
+</div>
+
+<!-- Transaction History Section -->
+<div class="card-section">
+    <div class="card-header">
+        <h3>My Recent Transaction Activity</h3>
+        <span class="badge-neutral">Live Session Records</span>
+    </div>
+
+    {% if transactions %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tx ID</th>
+                    <th>Timestamp</th>
+                    <th>Merchant Category</th>
+                    <th>Amount</th>
+                    <th>Risk Score</th>
+                    <th>Risk Level</th>
+                    <th>Decision Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td><code>#{{ tx.id }}</code></td>
+                    <td>{{ tx.created_at }}</td>
+                    <td><span class="category-badge">{{ tx.merchant_category|capitalize }}</span></td>
+                    <td class="amount-cell">${{ "%.2f"|format(tx.amount) }}</td>
+                    <td>
+                        <span class="score-pill score-{{ tx.risk_category|lower }}">{{ tx.risk_score }}/100</span>
+                    </td>
+                    <td>
+                        <span class="risk-pill {{ tx.risk_category|lower }}">
+                            {{ tx.risk_category }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-pill status-{{ tx.status|lower }}">
+                            {{ tx.status|replace('_', ' ') }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">💳</div>
+        <h4>No transactions submitted yet</h4>
+        <p>Run your first simulated payment to observe the real-time AI fraud detection engine in action.</p>
+        <a href="{{ url_for('transaction_page') }}" class="btn btn-outline">Launch Simulator</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

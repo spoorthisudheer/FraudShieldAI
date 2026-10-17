@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Simulate Payment — FraudShieldAI{% endblock %}
+
+{% block content %}
+<div class="page-title-block">
+    <h1>Real-Time Transaction Risk Simulator</h1>
+    <p class="subtitle">Submit pre-settlement transactions to evaluate IBM LinuxONE ML inference and rule-based defenses</p>
+</div>
+
+<!-- Scenario Presets Bar -->
+<div class="preset-card">
+    <div class="preset-title">⚡ Quick Scenario Presets for Live Datathon Demonstration:</div>
+    <div class="preset-buttons">
+        <button type="button" class="btn-scenario safe" onclick="loadScenario('safe')">
+            🟢 <strong>Scenario A: Normal Grocery</strong> (₹34.50 • Domestic • Trusted Device)
+        </button>
+        <button type="button" class="btn-scenario medium" onclick="loadScenario('medium')">
+            🟡 <strong>Scenario B: Unverified Tech</strong> (₹920.00 • 3.5x Avg • Step-Up OTP Required)
+        </button>
+        <button type="button" class="btn-scenario danger" onclick="loadScenario('danger')">
+            🔴 <strong>Scenario C: Nocturnal Crypto</strong> (₹4,800.00 • 03:00 AM • Proxy IP • Quarantined)
+        </button>
+    </div>
+</div>
+
+<div class="tx-layout-grid">
+    <!-- Transaction Input Form -->
+    <div class="tx-form-card">
+        <h3>💳 Transaction Parameters</h3>
+        <p class="section-desc">Adjust feature values to test model boundaries and explainability triggers.</p>
+
+        <form id="txForm" class="tx-form" onsubmit="submitTransaction(event)">
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <label for="amount">Transaction Amount (₹ INR)</label>
+                    <input type="number" id="amount" name="amount" step="0.01" min="1.0" max="10000.0" value="45.00" required class="form-input">
+                </div>
+
+                <div class="form-group col-6">
+                    <label for="merchant_category">Merchant Category</label>
+                    <select id="merchant_category" name="merchant_category" class="form-select">
+                        <option value="grocery" selected>Grocery / Retail</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="electronics">Electronics & Tech</option>
+                        <option value="luxury">Luxury Goods</option>
+                        <option value="travel">Airlines & Travel</option>
+                        <option value="gaming">Digital Gaming</option>
+                        <option value="crypto">Cryptocurrency Exchange</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <label for="hour_of_day">Transaction Hour (0-23h): <span id="hourVal" class="val-pill">14:00</span></label>
+                    <input type="range" id="hour_of_day" name="hour_of_day" min="0" max="23" value="14" class="form-range" oninput="document.getElementById('hourVal').innerText = this.value + ':00'">
+                </div>
+
+                <div class="form-group col-6">
+                    <label for="tx_velocity_1h">Tx Velocity in Past Hour: <span id="velocityVal" class="val-pill">1</span></label>
+                    <input type="range" id="tx_velocity_1h" name="tx_velocity_1h" min="1" max="10" value="1" class="form-range" oninput="document.getElementById('velocityVal').innerText = this.value">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <label for="avg_amount_ratio">Ratio vs Historical Avg: <span id="ratioVal" class="val-pill">1.0x</span></label>
+                    <input type="range" id="avg_amount_ratio" name="avg_amount_ratio" min="0.2" max="12.0" step="0.1" value="1.0" class="form-range" oninput="document.getElementById('ratioVal').innerText = this.value + 'x'">
+                </div>
+
+                <div class="form-group col-6">
+                    <label for="distance_from_home">Distance from Home (Miles): <span id="distVal" class="val-pill">5 mi</span></label>
+                    <input type="range" id="distance_from_home" name="distance_from_home" min="0" max="2500" step="10" value="5" class="form-range" oninput="document.getElementById('distVal').innerText = this.value + ' mi'">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <label for="device_trust_score">Device Trust Score: <span id="devVal" class="val-pill">0.95</span></label>
+                    <input type="range" id="device_trust_score" name="device_trust_score" min="0.0" max="1.0" step="0.05" value="0.95" class="form-range" oninput="document.getElementById('devVal').innerText = this.value">
+                </div>
+
+                <div class="form-group col-6">
+                    <label for="ip_risk_score">IP Proxy / Tor Risk Score: <span id="ipVal" class="val-pill">0.05</span></label>
+                    <input type="range" id="ip_risk_score" name="ip_risk_score" min="0.0" max="1.0" step="0.05" value="0.05" class="form-range" oninput="document.getElementById('ipVal').innerText = this.value">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <label for="failed_logins_24h">Failed Logins (Past 24h)</label>
+                    <select id="failed_logins_24h" name="failed_logins_24h" class="form-select">
+                        <option value="0" selected>0 Failed Attempts</option>
+                        <option value="1">1 Failed Attempt</option>
+                        <option value="2">2 Failed Attempts (Suspicious)</option>
+                        <option value="3">3+ Failed Attempts (High Risk)</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-6">
+                    <label>Flags</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="is_international" name="is_international"> Cross-Border Route
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="is_first_merchant_use" name="is_first_merchant_use"> First Time at Merchant
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSubmitTx" class="btn btn-primary btn-block btn-lg">
+                🚀 Run Real-Time Risk Analysis
+            </button>
+        </form>
+    </div>
+
+    <!-- Real-Time Evaluation Result Card -->
+    <div class="tx-result-card">
+        <h3>🛡️ Shield Risk Verdict</h3>
+        <p class="section-desc">Instantaneous composite score and explainability breakdown.</p>
+
+        <div id="resultPlaceholder" class="result-placeholder">
+            <div class="radar-pulse"></div>
+            <p>Awaiting transaction submission...</p>
+            <small>Select a preset or click "Run Real-Time Risk Analysis" to observe sub-second inference on s390x.</small>
+        </div>
+
+        <div id="resultOutput" class="result-output" style="display: none;">
+            <div class="verdict-banner" id="verdictBanner">
+                <span class="verdict-status" id="verdictStatus">APPROVED</span>
+                <span class="verdict-txid" id="verdictTxId">TX #1</span>
+            </div>
+
+            <!-- Risk Meter / Gauge -->
+            <div class="risk-meter-container">
+                <div class="gauge-bar-wrapper">
+                    <div class="gauge-fill" id="gaugeFill" style="width: 15%;"></div>
+                </div>
+                <div class="gauge-labels">
+                    <span>0 (Low Risk)</span>
+                    <span class="gauge-score" id="gaugeScore">15 / 100</span>
+                    <span>100 (Critical)</span>
+                </div>
+            </div>
+
+            <div class="score-meta-grid">
+                <div class="meta-box">
+                    <div class="meta-label">ML Fraud Probability</div>
+                    <div class="meta-val" id="metaMlProb">2.3%</div>
+                </div>
+                <div class="meta-box">
+                    <div class="meta-label">Risk Category</div>
+                    <div class="meta-val" id="metaRiskCategory">LOW</div>
+                </div>
+            </div>
+
+            <!-- Explainability Section -->
+            <div class="explainability-box">
+                <h4>🔍 Why was this decision made?</h4>
+                <ul class="reason-list" id="reasonList">
+                    <li>Normal transaction parameters and recognized device.</li>
+                </ul>
+            </div>
+
+            <!-- Action Prompt Container -->
+            <div id="actionPromptContainer" class="action-prompt"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Simulated Step-Up OTP Modal -->
+<div id="otpModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🔐 Simulated Step-Up OTP Verification</h3>
+            <span class="modal-close" onclick="closeOtpModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Because this transaction was flagged with <strong>Medium Risk</strong>, simulated two-factor verification is required to proceed.</p>
+            
+            <div class="otp-display-box">
+                <span class="otp-label">SIMULATED DEMO OTP CODE:</span>
+                <span class="otp-code" id="displayOtpCode">123456</span>
+                <small class="text-muted">(Enter the simulated OTP below to authorize payment)</small>
+            </div>
+
+            <div class="form-group">
+                <label for="inputOtp">Enter 6-Digit Code</label>
+                <input type="text" id="inputOtp" maxlength="6" placeholder="e.g. 123456" class="form-input text-center font-mono">
+            </div>
+
+            <div id="otpError" class="alert alert-danger" style="display: none;"></div>
+
+            <button type="button" class="btn btn-primary btn-block" onclick="submitSimulatedOtp()">
+                Verify & Complete Payment
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

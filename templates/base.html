@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FraudShieldAI — IBM Z Datathon 2026{% endblock %}</title>
+    <!-- Modern Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Top Ethical Simulation Banner -->
+    <header class="sim-banner">
+        <div class="banner-content">
+            <span class="badge-z">IBM LinuxONE / s390x</span>
+            <span>🛡️ <strong>DEMONSTRATION PROTOTYPE:</strong> Simulated banking security engine for IBM Z Datathon 2026. Zero real credentials or funds collected.</span>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="brand-logo">
+                <span class="logo-shield">🛡️</span>
+                <span class="logo-text">FraudShield<span class="logo-highlight">AI</span></span>
+            </a>
+
+            <div class="nav-links">
+                {% if session.get('user_id') %}
+                    {% if session.get('role') == 'admin' %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">Admin Operations</a>
+                        <a href="{{ url_for('audit_logs') }}" class="nav-item {% if request.endpoint == 'audit_logs' %}active{% endif %}">Audit Trail</a>
+                    {% endif %}
+                    <a href="{{ url_for('user_dashboard') }}" class="nav-item {% if request.endpoint == 'user_dashboard' %}active{% endif %}">My Dashboard</a>
+                    <a href="{{ url_for('transaction_page') }}" class="nav-item {% if request.endpoint == 'transaction_page' %}active{% endif %}">Simulate Payment</a>
+                    
+                    <div class="nav-user">
+                        <span class="user-pill {{ session.get('role') }}">
+                            {{ session.get('username') }} <small>({{ session.get('role')|upper }})</small>
+                        </span>
+                        <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-item {% if request.endpoint == 'login' %}active{% endif %}">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn-primary-sm">Register Demo</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Notifications -->
+    <main class="main-wrapper">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <span class="alert-icon">
+                                    {% if category == 'success' %}✓{% elif category == 'danger' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
+                                </span>
+                                <span class="alert-msg">{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container footer-content">
+            <p><strong>FraudShieldAI</strong> — IBM Z Datathon 2026 Prototype</p>
+            <p class="footer-subtext">Engineered for IBM LinuxONE Community Cloud • Powered by Scikit-Learn on s390x • 100% Free & Open Source</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

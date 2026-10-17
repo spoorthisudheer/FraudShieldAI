@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Login — FraudShieldAI{% endblock %}
+
+{% block content %}
+<div class="auth-card-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">🔐</div>
+            <h2>FraudShieldAI Authentication</h2>
+            <p>Access the real-time banking risk and fraud analysis portal</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username">Demo Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter username" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter password" class="form-input">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Log In to Prototype</button>
+        </form>
+
+        <div class="demo-credentials-box">
+            <h4>⚡ Quick Test Credentials:</h4>
+            <div class="cred-grid">
+                <button type="button" class="btn-preset" onclick="fillCredentials('demo_user', 'DemoUser123!')">
+                    👤 Customer: <code>demo_user</code>
+                </button>
+                <button type="button" class="btn-preset admin" onclick="fillCredentials('admin_sec', 'AdminShield2026!')">
+                    🛡️ Admin: <code>admin_sec</code>
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            <p>Need a custom test user? <a href="{{ url_for('register') }}">Create a demo account</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillCredentials(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+}
+</script>
+{% endblock %}
